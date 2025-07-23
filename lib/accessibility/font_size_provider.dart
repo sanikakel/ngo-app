@@ -1,28 +1,26 @@
 import 'package:flutter/material.dart';
 
-class FontSizeNotifier extends ChangeNotifier {
-  double _fontSize = 16.0; // default font size
-
-  double get fontSize => _fontSize;
+class FontSizeNotifier extends ValueNotifier<double> {
+  FontSizeNotifier([double initialFontSize = 16.0]) : super(initialFontSize);
 
   void increase() {
-    if (_fontSize < 30.0) {
-      _fontSize += 2;
-      notifyListeners();
+    if (value < 30.0) {
+      value += 2;
     }
   }
 
   void decrease() {
-    if (_fontSize > 10.0) {
-      _fontSize -= 2;
-      notifyListeners();
+    if (value > 10.0) {
+      value -= 2;
     }
   }
 
   void setFontSize(double size) {
     if (size >= 10.0 && size <= 30.0) {
-      _fontSize = size;
-      notifyListeners();
+      value = size;
     }
   }
+
+  double get fontSize => value;
 }
+

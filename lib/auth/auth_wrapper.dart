@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'signin_screen.dart';
 import '../home/category_selection_screen.dart';
+import '../accessibility/font_size_provider.dart';
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+  final FontSizeNotifier fontSizeNotifier;
+  const AuthWrapper({required this.fontSizeNotifier, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,11 +14,11 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return Scaffold(body: Center(child: CircularProgressIndicator()));
         } else if (snapshot.hasData) {
-          return const CategorySelectionScreen(); // After login/signup, go to category selection
+          return CategorySelectionScreen(fontSizeNotifier: fontSizeNotifier); // After login/signup, go to category selection
         } else {
-          return const SignInScreen(); // Default to login screen
+          return SignInScreen(fontSizeNotifier: fontSizeNotifier); // Default to login screen
         }
       },
     );
