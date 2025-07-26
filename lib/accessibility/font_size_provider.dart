@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FontSizeNotifier extends ValueNotifier<double> {
-  FontSizeNotifier([double initialFontSize = 16.0]) : super(initialFontSize);
+  FontSizeNotifier([super.initialFontSize = 16.0]);
 
   void increase() {
     if (value < 30.0) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../accessibility/font_size_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpScreen extends StatefulWidget {
   final FontSizeNotifier fontSizeNotifier;
@@ -12,8 +13,31 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  String _getRoleKey(String display) {
+    switch (display) {
+      case 'Underprivileged Woman/Girl':
+        return 'underprivileged';
+      case 'Senior Citizen':
+        return 'senior';
+      case 'Specially-abled':
+        return 'special';
+      case 'Volunteer':
+        return 'volunteer';
+      default:
+        return display.toLowerCase();
+    }
+  }
+
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String _selectedRole = 'Volunteer';
+  final List<String> _roles = [
+    'Volunteer',
+    'Senior Citizen',
+    'Specially-abled',
+    'Underprivileged Woman/Girl',
+  ];
   bool _isLoading = false;
   String? _error;
 
@@ -23,11 +47,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _error = null;
     });
 
+    if (_nameController.text.trim().isEmpty) {
+      setState(() {
+        _error = 'Name is required.';
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      // Save user details to Firestore, including name
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'role': _getRoleKey(_selectedRole),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      // Optionally update FirebaseAuth displayName
+      await userCredential.user!.updateDisplayName(_nameController.text.trim());
       Navigator.pop(context); // Return to SignInScreen (will redirect via AuthWrapper)
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -43,108 +84,120 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Sign Up", style: TextStyle(fontSize: widget.fontSizeNotifier.value))),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            if (_error != null)
-              Text(_error!, style: TextStyle(color: Colors.red, fontSize: widget.fontSizeNotifier.value)),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: "Email"),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: "Password (min. 6 chars)"),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            _isLoading
-                ? CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _signUp,
-                    child: Text("Sign Up", style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
+      appBar: null,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset('assets/Yes I Can Mini Logo.png', width: 48, height: 48),
+                      SizedBox(width: 8),
+                      Text('Yes I Can!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0057B8))),
+                    ],
                   ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-
-/*
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-class SignUpScreen extends StatefulWidget {
-  @override
-  _SignUpScreenState createState() => _SignUpScreenState();
-}
-
-class _SignUpScreenState extends State<SignUpScreen> {
-  final _auth = FirebaseAuth.instance;
-  final _formKey = GlobalKey<FormState>();
-
-  String email = '';
-  String password = '';
-  String error = '';
-
-  void signUp() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        await _auth.createUserWithEmailAndPassword(email: email, password: password);
-        Navigator.pushReplacementNamed(context, '/home'); // Redirect after sign-up
-      } catch (e) {
-        setState(() {
-          error = e.toString();
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Sign Up")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(labelText: "Email"),
-                onChanged: (val) => email = val,
-                validator: (val) => val!.isEmpty ? "Enter an email" : null,
+                  SizedBox(height: 32),
+                  Text('Sign Up', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black)),
+                  SizedBox(height: 8),
+                  Text('Create your account', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+                  SizedBox(height: 24),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Text(_error!, style: TextStyle(color: Colors.red, fontSize: 16)),
+                    ),
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: "Name",
+                      prefixIcon: Icon(Icons.person_outline),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      prefixIcon: Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      labelText: "Password",
+                      prefixIcon: Icon(Icons.lock_outline),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                    ),
+                    obscureText: true,
+                  ),
+                  SizedBox(height: 16),
+                  Text('Which type of beneficiary are you?', style: TextStyle(fontSize: 16, color: Colors.black87)),
+                  SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _selectedRole,
+                    decoration: InputDecoration(
+                      labelText: "Select an option",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                    ),
+                    items: _roles.map((role) => DropdownMenuItem(
+                      value: role,
+                      child: Text(role, style: TextStyle(fontSize: 16)),
+                    )).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedRole = value!;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 24),
+                  _isLoading
+                      ? Center(child: CircularProgressIndicator())
+                      : SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: Color(0xFF2DBEF4),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: _signUp,
+                            child: Text("Sign up", style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                  SizedBox(height: 18),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Already have an account?', style: TextStyle(fontSize: 15)),
+                      SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Text('Sign in', style: TextStyle(fontSize: 15, color: Color(0xFF2DBEF4), fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                ],
               ),
-              TextFormField(
-                decoration: InputDecoration(labelText: "Password"),
-                obscureText: true,
-                onChanged: (val) => password = val,
-                validator: (val) => val!.length < 6 ? "Enter a 6+ char password" : null,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: signUp,
-                child: Text("Sign Up"),
-              ),
-              SizedBox(height: 10),
-              Text(error, style: TextStyle(color: Colors.red)),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/signin');
-                },
-                child: Text("Already have an account? Sign In"),
-              )
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-*/
