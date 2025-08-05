@@ -77,10 +77,14 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Upload Resource', style: TextStyle(fontSize: widget.fontSize + 2)),
+        title: Text('Upload Resource', style: TextStyle(fontSize: widget.fontSize + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.blue[900]),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        iconTheme: IconThemeData(color: Color(0xFF0057B8)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(22),
