@@ -5,6 +5,7 @@ import 'accessibility/font_size_provider.dart';
 import 'package:provider/provider.dart';
 import 'accessibility/tts_fab_alignment_provider.dart';
 import 'accessibility/language_provider.dart';
+import 'accessibility/screen_reader_volume_notifier.dart';
 
 
 void main() async {
@@ -18,6 +19,7 @@ void main() async {
         ChangeNotifierProvider<FontSizeNotifier>.value(value: fontSizeNotifier),
         ChangeNotifierProvider<TTSFabAlignmentProvider>(create: (_) => TTSFabAlignmentProvider()),
         ChangeNotifierProvider<LanguageNotifier>(create: (_) => LanguageNotifier('en')),
+        ChangeNotifierProvider<ScreenReaderVolumeNotifier>.value(value: screenReaderVolumeNotifier),
       ],
       child: ValueListenableBuilder<double>(
         valueListenable: fontSizeNotifier,

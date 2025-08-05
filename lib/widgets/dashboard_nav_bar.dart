@@ -8,6 +8,7 @@ import '../settings/settings_screen.dart';
 import '../chat/help_chat_screen.dart';
 import '../chat/volunteer_beneficiary_list_screen.dart';
 import '../accessibility/font_size_provider.dart';
+import '../home/user_activity_tracker_screen.dart';
 
 /// role: 'beneficiary' or 'volunteer'
 /// category: only needed for beneficiary home
@@ -39,8 +40,8 @@ class DashboardNavBar extends StatelessWidget {
       items: [
         const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(
-          icon: Icon(isBeneficiary ? Icons.menu_book : Icons.play_circle_filled),
-          label: isBeneficiary ? 'Resources' : 'My Tasks',
+          icon: Icon(isBeneficiary ? Icons.menu_book : Icons.analytics),
+          label: isBeneficiary ? 'Resources' : 'Tracker',
         ),
         const BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Help Chat'),
         const BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
@@ -80,7 +81,7 @@ class DashboardNavBar extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MyTasksScreen(fontSizeNotifier: fontSizeNotifier),
+                  builder: (_) => UserActivityTrackerScreen(fontSizeNotifier: fontSizeNotifier),
                 ),
               );
             }

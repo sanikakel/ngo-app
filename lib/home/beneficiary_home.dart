@@ -16,6 +16,7 @@ import '../profile/profile_screen.dart';
 import '../widgets/pickup_card.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../resources/beneficiary_resources_screen.dart';
+import '../widgets/draggable_tts_fab.dart';
 
 class BeneficiaryHome extends StatefulWidget {
   final String category; // 'underprivileged', 'special', 'senior'
@@ -93,7 +94,6 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
         ];
         break;
       case 'special':
-        greeting = 'Welcome!';
         cards = [
           _DashboardCardData(
             color: Color(0xFF2DBEF4),
@@ -104,7 +104,7 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
           _DashboardCardData(
             color: Color(0xFFFF9800),
             icon: Icons.build,
-            title: 'Vocational Training Modules',
+            title: 'Helpful Links',
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeciallyAbledInfoScreen(fontSizeNotifier: fontSizeNotifier))),
           ),
           _DashboardCardData(
@@ -116,7 +116,6 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
         ];
         break;
       case 'senior':
-        greeting = 'Welcome back!';
         cards = [
           _DashboardCardData(
             color: Color(0xFF2DBEF4),
@@ -139,98 +138,112 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
         ];
         break;
       default:
-        greeting = "Welcome!";
         cards = [];
     }
 
-    return Scaffold(
+    // Collect all main visible text for TTS
+    final ttsText = [
+      greeting,
+      "What would you like to learn today?",
+      ...cards.map((c) => c.title)
+    ].join('. ');
+
+    return Stack(
+      children: [
+        Scaffold(
           appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/Yes I Can Mini Logo.png',
-              width: 36,
-              height: 36,
-            ),
-            const SizedBox(width: 10),
-            Text("Yes I Can!", style: TextStyle(fontSize: fontSizeNotifier.value + 4, fontWeight: FontWeight.bold)),
-            Spacer(),
-            IconButton(
-              icon: Icon(Icons.account_circle, color: Colors.grey.shade800),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProfileScreen(fontSizeNotifier: fontSizeNotifier),
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.logout, color: Colors.redAccent),
-              tooltip: 'Sign Out',
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => AuthWrapper(fontSizeNotifier: fontSizeNotifier)),
-                  (route) => false,
-                );
-              },
-            ),
-          ],
-        ),
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 10),
-              Text(
-                greeting,
-                style: TextStyle(
-                  fontSize: fontSizeNotifier.value + 8,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade900,
+            title: Row(
+              children: [
+                Image.asset(
+                  'assets/Yes I Can Mini Logo.png',
+                  width: 36,
+                  height: 36,
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                "What would you like to learn today?",
-                style: TextStyle(
-                  fontSize: fontSizeNotifier.value + 2,
-                  color: Colors.grey.shade800,
+                const SizedBox(width: 10),
+                Text("Yes I Can!", style: TextStyle(fontSize: fontSizeNotifier.value + 4, fontWeight: FontWeight.bold)),
+                Spacer(),
+                IconButton(
+                  icon: Icon(Icons.account_circle, color: Colors.grey.shade800),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(fontSizeNotifier: fontSizeNotifier),
+                      ),
+                    );
+                  },
                 ),
-              ),
-              SizedBox(height: 18),
-              for (int i = 0; i < cards.length; i++) ...[
-                DashboardCard(
-                  color: cards[i].color,
-                  icon: cards[i].icon,
-                  title: cards[i].title,
-                  onTap: cards[i].onTap,
-                  fontSize: fontSizeNotifier.value + 2,
-                  textColor: (cards[i].color.value == 0xFFFFF59E) ? Colors.black : null,
+                IconButton(
+                  icon: Icon(Icons.logout, color: Colors.redAccent),
+                  tooltip: 'Sign Out',
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => AuthWrapper(fontSizeNotifier: fontSizeNotifier)),
+                      (route) => false,
+                    );
+                  },
                 ),
-                if (i != cards.length - 1) const SizedBox(height: 16),
               ],
-              SizedBox(height: 24),
-            ],
+            ),
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.white,
+            elevation: 0,
+          ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 10),
+                  Text(
+                    greeting,
+                    style: TextStyle(
+                      fontSize: fontSizeNotifier.value + 8,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade900,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "What would you like to learn today?",
+                    style: TextStyle(
+                      fontSize: fontSizeNotifier.value + 2,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  SizedBox(height: 18),
+                  for (int i = 0; i < cards.length; i++) ...[
+                    DashboardCard(
+                      color: cards[i].color,
+                      icon: cards[i].icon,
+                      title: cards[i].title,
+                      onTap: cards[i].onTap,
+                      fontSize: fontSizeNotifier.value + 2,
+                      textColor: (cards[i].color.value == 0xFFFFF59E) ? Colors.black : null,
+                    ),
+                    if (i != cards.length - 1) const SizedBox(height: 16),
+                  ],
+                  SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+          bottomNavigationBar: DashboardNavBar(
+            fontSize: fontSizeNotifier.value,
+            currentIndex: 0,
+            fontSizeNotifier: fontSizeNotifier,
+            role: 'beneficiary',
           ),
         ),
-      ),
-      bottomNavigationBar: DashboardNavBar(
-        fontSize: fontSizeNotifier.value,
-        currentIndex: 0,
-        fontSizeNotifier: fontSizeNotifier,
-        role: 'beneficiary',
-      ),
+        DraggableTTSFab(
+          text: ttsText,
+          fontSize: fontSizeNotifier.value,
+          volume: 1.0,
+        ),
+      ],
     );
-
   }
 
   String _getHomeScreenText(String greeting, List<_DashboardCardData> cards) {

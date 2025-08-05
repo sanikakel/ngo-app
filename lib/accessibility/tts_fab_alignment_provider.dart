@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TTSFabAlignmentProvider extends ChangeNotifier {
-  // Default: right side, ~20% from top
-  Alignment _alignment = Alignment(0.95, -0.7);
+  // Default: positioned as requested by the user
+  Alignment _alignment = Alignment(0.8, -0.7);
 
   Alignment get alignment => _alignment;
 

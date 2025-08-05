@@ -77,20 +77,20 @@ class _UnderprivilegedInfoScreenState extends State<UnderprivilegedInfoScreen> {
       children: [
         Scaffold(
           backgroundColor: Color(0xFFF7FAFC),
-          appBar: AppBar(
+      appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
             title: Text('Health & Wellness', style: TextStyle(fontSize: fontSize + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
             leading: BackButton(color: Color(0xFF0057B8)),
-          ),
-          body: ListView(
+      ),
+      body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+        children: [
                     Center(
                       child: Text('🩺', style: TextStyle(fontSize: fontSize + 32)),
                     ),

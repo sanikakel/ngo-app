@@ -23,7 +23,7 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
   String? _error;
 
   final List<Map<String, String>> _categories = [
-    {'label': 'Underprivileged', 'value': 'underprivileged'},
+    {'label': 'Underprivileged Woman/Girl', 'value': 'underprivileged'},
     {'label': 'Specially-abled', 'value': 'special'},
     {'label': 'Senior Citizen', 'value': 'senior'},
   ];

@@ -151,7 +151,6 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
               text: _getChatScreenText(),
               fontSize: widget.fontSizeNotifier.value,
               volume: 1.0,
-              initialAlignment: Alignment.topRight,
             ),
           ],
         ),
@@ -189,7 +188,6 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
             text: _getChatScreenText(),
             fontSize: widget.fontSizeNotifier.value,
             volume: 1.0,
-            initialAlignment: Alignment.topRight,
           ),
         ],
       ),
@@ -314,13 +312,13 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                         ),
                       ],
                     ),
-                    child: TextField(
-                      controller: _questionController,
-                      style: TextStyle(fontSize: widget.fontSizeNotifier.value),
-                      decoration: InputDecoration(
-                        hintText: 'Type your message',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(fontSize: widget.fontSizeNotifier.value * 0.95, color: Colors.grey[500]),
+                  child: TextField(
+                    controller: _questionController,
+                    style: TextStyle(fontSize: widget.fontSizeNotifier.value),
+                    decoration: InputDecoration(
+                      hintText: 'Type your message',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(fontSize: widget.fontSizeNotifier.value * 0.95, color: Colors.grey[500]),
                         contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       ),
                     ),
@@ -340,9 +338,9 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                     ],
                   ),
                   child: IconButton(
-                    onPressed: () {
-                      _submitQuestion();
-                    },
+                  onPressed: () {
+  _submitQuestion();
+},
                     icon: Icon(Icons.send_rounded, color: Colors.white, size: widget.fontSizeNotifier.value + 4),
                     tooltip: 'Send',
                   ),

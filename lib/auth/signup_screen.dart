@@ -70,7 +70,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
         'role': _getRoleKey(_selectedRole),
+        'category': _selectedRole == 'Volunteer' ? '' : _getRoleKey(_selectedRole),
         'createdAt': FieldValue.serverTimestamp(),
+        'lastLoginTimestamp': FieldValue.serverTimestamp(),
+        'lastActivityTimestamp': FieldValue.serverTimestamp(),
       });
       // Optionally update FirebaseAuth displayName
       await userCredential.user!.updateDisplayName(_nameController.text.trim());

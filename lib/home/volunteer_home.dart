@@ -13,6 +13,8 @@ import '../resources/upload_resource_screen.dart';
 import '../profile/profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/auth_wrapper.dart';
+import '../widgets/draggable_tts_fab.dart';
+import 'user_activity_tracker_screen.dart';
 
 
 class VolunteerHome extends StatelessWidget {
@@ -38,16 +40,12 @@ class VolunteerHome extends StatelessWidget {
       ),
       _DashboardCardData(
         color: Colors.amber.shade600,
-        icon: Icons.info_outline,
-        title: 'Volunteer Resources',
+        icon: Icons.analytics,
+        title: 'User Activity Tracker',
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => PlaceholderScreen(
-              title: 'Volunteer Resources',
-              message: 'Feature coming soon',
-              icon: Icons.info_outline,
-            ),
+            builder: (_) => UserActivityTrackerScreen(fontSizeNotifier: fontSizeNotifier),
           ),
         ),
       ),
@@ -74,88 +72,108 @@ class VolunteerHome extends StatelessWidget {
       ),
     ];
 
-    return Scaffold(
+    // Collect all main visible text for TTS
+    final ttsText = [
+      'Volunteer Dashboard',
+      'Welcome to your volunteer dashboard',
+      ...cards.map((c) => c.title)
+    ].join('. ');
+
+    return Stack(
+      children: [
+        Scaffold(
           appBar: AppBar(
             title: Row(
-          children: [
-            Image.asset(
-              'assets/Yes I Can Mini Logo.png',
-              width: 36,
-              height: 36,
+              children: [
+                Image.asset(
+                  'assets/Yes I Can Mini Logo.png',
+                  width: 36,
+                  height: 36,
+                ),
+                const SizedBox(width: 10),
+                Text("Yes I Can!", style: TextStyle(fontSize: fSize + 4, fontWeight: FontWeight.bold)),
+                Spacer(),
+                IconButton(
+                  icon: Icon(Icons.account_circle, color: Colors.grey.shade800),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(fontSizeNotifier: fontSizeNotifier),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.logout, color: Colors.redAccent),
+                  tooltip: 'Sign Out',
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => AuthWrapper(fontSizeNotifier: fontSizeNotifier)),
+                      (route) => false,
+                    );
+                  },
+                ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Text("Yes I Can!", style: TextStyle(fontSize: fSize + 4, fontWeight: FontWeight.bold)),
-            Spacer(),
-            IconButton(
-              icon: Icon(Icons.account_circle, color: Colors.grey.shade800),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProfileScreen(
-                      fontSizeNotifier: fontSizeNotifier,
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.white,
+            elevation: 0,
+          ),
+          backgroundColor: Color(0xFFF6F8FB),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 10),
+                  Text(
+                    'Welcome back volunteer!',
+                    style: TextStyle(
+                      fontSize: fSize + 8,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade900,
                     ),
                   ),
-                );
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.logout, color: Colors.redAccent),
-              tooltip: 'Sign Out',
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => AuthWrapper(fontSizeNotifier: fontSizeNotifier)),
-                  (route) => false,
-                );
-              },
-            ),
-          ],
-        ),
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 10),
-            Text(
-              "Welcome, Volunteer!",
-              style: TextStyle(
-                fontSize: fSize + 8,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade900,
+                  SizedBox(height: 8),
+                  Text(
+                    "What would you like to do today?",
+                    style: TextStyle(
+                      fontSize: fSize + 2,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  SizedBox(height: 18),
+                  for (int i = 0; i < cards.length; i++) ...[
+                    DashboardCard(
+                      color: cards[i].color,
+                      icon: cards[i].icon,
+                      title: cards[i].title,
+                      onTap: cards[i].onTap,
+                      fontSize: fSize + 2,
+                    ),
+                    if (i != cards.length - 1) const SizedBox(height: 16),
+                  ],
+                  SizedBox(height: 24),
+                ],
               ),
             ),
-            SizedBox(height: 8),
-            Text(
-              "Ready to make a difference today?",
-              style: TextStyle(
-                fontSize: fSize + 2,
-                color: Colors.grey.shade800,
-              ),
-            ),
-            SizedBox(height: 18),
-            ...cards.map((card) => DashboardCard(
-              color: card.color,
-              icon: card.icon,
-              title: card.title,
-              onTap: card.onTap,
-              fontSize: fSize + 2,
-            )),
-            Spacer(),
-          ],
+          ),
+          bottomNavigationBar: DashboardNavBar(
+            fontSize: fSize,
+            currentIndex: 0,
+            fontSizeNotifier: fontSizeNotifier,
+            role: 'volunteer',
+          ),
         ),
-      ),
-      bottomNavigationBar: DashboardNavBar(
-        fontSize: fontSizeNotifier.value,
-        currentIndex: 0,
-        fontSizeNotifier: fontSizeNotifier,
-        role: 'volunteer',
-      ),
+        DraggableTTSFab(
+          text: ttsText,
+          fontSize: fontSizeNotifier.value,
+          volume: 1.0,
+        ),
+      ],
     );
   }
 }

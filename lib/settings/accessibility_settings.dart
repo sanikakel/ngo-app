@@ -65,7 +65,7 @@ class AccessibilitySettings extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 8, bottom: 8),
             child: Text(
-              'Screen Reader Volume',
+              'Screen Reader Settings',
               style: TextStyle(
                 fontSize: fontSizeNotifier.value + 2,
                 fontWeight: FontWeight.bold,
@@ -75,19 +75,72 @@ class AccessibilitySettings extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(Icons.volume_up, color: Theme.of(context).primaryColor),
-            title: Text('Adjust screen reader volume', style: TextStyle(fontSize: fontSizeNotifier.value, color: Colors.black)),
+            title: Text('Screen Reader Volume', style: TextStyle(fontSize: fontSizeNotifier.value, color: Colors.black)),
             subtitle: ValueListenableBuilder<double>(
               valueListenable: screenReaderVolumeNotifier,
-              builder: (context, volume, _) => Slider(
-                value: volume,
-                min: 0.0,
-                max: 1.0,
-                divisions: 10,
-                label: '${(volume * 100).toStringAsFixed(0)}%',
-                onChanged: (val) => screenReaderVolumeNotifier.value = val,
+              builder: (context, volume, _) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Slider(
+                    value: volume,
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 10,
+                    label: '${(volume * 100).toStringAsFixed(0)}%',
+                    onChanged: (val) => screenReaderVolumeNotifier.value = val,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('${(volume * 100).toStringAsFixed(0)}%', 
+                        style: TextStyle(fontSize: fontSizeNotifier.value - 2)),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.volume_off),
+                            onPressed: () => screenReaderVolumeNotifier.toggleMute(),
+                            tooltip: 'Mute/Unmute',
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.volume_down),
+                            onPressed: () => screenReaderVolumeNotifier.decreaseVolume(),
+                            tooltip: 'Decrease Volume',
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.volume_up),
+                            onPressed: () => screenReaderVolumeNotifier.increaseVolume(),
+                            tooltip: 'Increase Volume',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          ),
+          
+          // Add a test button for the screen reader
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ElevatedButton.icon(
+              icon: Icon(Icons.play_arrow),
+              label: Text('Test Screen Reader', 
+                style: TextStyle(fontSize: fontSizeNotifier.value)),
+              onPressed: () {
+                // Show a snackbar with instructions
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Tap the floating screen reader button to hear screen content'),
+                  duration: Duration(seconds: 3),
+                ));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
           ),
         ],
       ),

@@ -42,37 +42,83 @@ class _TTSFabState extends State<TTSFab> {
   }
 
   String _extractTextFrom(BuildContext context) {
+    // First try to use the provided text if it's not empty
+    if (widget.text.isNotEmpty && widget.text != 'Screen reader text-to-speech') {
+      return widget.text;
+    }
+    
+    // Otherwise extract text from the UI
     StringBuffer buffer = StringBuffer();
+    
     void visitor(Element element) {
+      // Extract text from Text widgets
       if (element.widget is Text) {
         final Text textWidget = element.widget as Text;
-        buffer.write(textWidget.data ?? textWidget.toString());
-        buffer.write('. ');
+        final String textData = textWidget.data ?? '';
+        if (textData.isNotEmpty) {
+          buffer.write(textData);
+          buffer.write('. ');
+        }
       }
+      
+      // Extract text from TextField widgets
+      else if (element.widget is TextField) {
+        final TextField textField = element.widget as TextField;
+        if (textField.decoration?.labelText != null) {
+          buffer.write(textField.decoration!.labelText);
+          buffer.write(': ');
+          // We can't get the actual text value here, just the label
+        }
+      }
+      
+      // Extract text from buttons
+      else if (element.widget is ElevatedButton || 
+               element.widget is TextButton || 
+               element.widget is OutlinedButton) {
+        // The button text will be found by visiting children
+      }
+      
+      // Continue traversing the widget tree
       element.visitChildren(visitor);
     }
-    // Try to find the nearest Navigator or Scaffold ancestor and traverse from there
+    
+    // Try to find the nearest Material ancestor and traverse from there
     Element? subtreeRoot;
     context.visitAncestorElements((element) {
-      if (element.widget is Navigator || element.widget is Scaffold) {
+      if (element.widget is Scaffold || element.widget is Navigator || element.widget is MaterialApp) {
         subtreeRoot = element;
         return false; // stop at first match
       }
       return true;
     });
+    
     if (subtreeRoot != null) {
       visitor(subtreeRoot!);
     } else {
+      // If no suitable ancestor is found, start from the current context
       context.visitChildElements(visitor);
     }
+    
     return buffer.toString();
   }
 
   Future<void> _speak() async {
     setState(() => isPlaying = true);
     await flutterTts.stop();
-    final screenText = _extractTextFrom(context);
-    await flutterTts.speak(screenText.isNotEmpty ? screenText : 'No readable text found on this screen.');
+    
+    // Extract text from the screen
+    String screenText = _extractTextFrom(context);
+    
+    // If no text was found, try to use the widget text or a default message
+    if (screenText.isEmpty) {
+      screenText = widget.text.isNotEmpty ? widget.text : 'No readable text found on this screen.';
+    }
+    
+    // Set speech rate to a comfortable pace
+    await flutterTts.setSpeechRate(0.5);
+    
+    // Speak the text
+    await flutterTts.speak(screenText);
   }
 
   @override
