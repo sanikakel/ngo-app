@@ -31,29 +31,34 @@ class ChatBubble extends StatelessWidget {
     final radius = BorderRadius.only(
       topLeft: Radius.circular(20),
       topRight: Radius.circular(20),
-      bottomLeft: isSender ? Radius.circular(20) : Radius.circular(6),
-      bottomRight: isSender ? Radius.circular(6) : Radius.circular(20),
+      bottomLeft: isSender ? Radius.circular(20) : Radius.circular(10),
+      bottomRight: isSender ? Radius.circular(10) : Radius.circular(20),
     );
     final shadow = [
       BoxShadow(
-        color: Colors.black.withOpacity(0.06),
-        blurRadius: 8,
+        color: Colors.black.withOpacity(0.04),
+        blurRadius: 6,
         offset: Offset(0, 2),
       ),
     ];
+    // iMessage/Google Chat-like subtle colors
+    final Color senderBubble = Color(0xFFD2E3FC); // soft blue
+    final Color receiverBubble = Color(0xFFF2F2F7); // light gray
+    final Color senderProfile = Color(0xFF90CAF9); // soft blue accent
+    final Color receiverProfile = Color(0xFFB0BEC5); // soft blue-gray
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       child: Row(
         mainAxisAlignment: isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isSender)
             Padding(
-              padding: const EdgeInsets.only(right: 6.0),
+              padding: const EdgeInsets.only(right: 8.0),
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: Colors.grey[400],
-                child: Text(_getInitials(senderName), style: TextStyle(fontSize: fontSize * 0.8, color: Colors.white)),
+                backgroundColor: receiverProfile,
+                child: Text(_getInitials(senderName), style: TextStyle(fontSize: fontSize * 0.8, color: Color(0xFF222B45), fontWeight: FontWeight.bold)),
               ),
             ),
           Flexible(
@@ -65,17 +70,15 @@ class ChatBubble extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 6, right: 6, bottom: 2),
                     child: Text(
                       senderName!,
-                      style: TextStyle(fontSize: fontSize * 0.85, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: fontSize * 0.9, fontWeight: FontWeight.w600, color: Colors.grey[700]),
                     ),
                   ),
                 AnimatedContainer(
                   duration: Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                   decoration: BoxDecoration(
-                    gradient: isSender
-                        ? LinearGradient(colors: [Colors.blue.shade200, Colors.blue.shade100])
-                        : LinearGradient(colors: [Colors.grey.shade200, Colors.grey.shade100]),
+                    color: isSender ? senderBubble : receiverBubble,
                     borderRadius: radius,
                     boxShadow: shadow,
                   ),
@@ -84,14 +87,14 @@ class ChatBubble extends StatelessWidget {
                     children: [
                       Text(
                         text,
-                        style: TextStyle(fontSize: fontSize, color: Colors.black87, height: 1.4),
+                        style: TextStyle(fontSize: fontSize + 1, color: Color(0xFF222B45), height: 1.5, fontWeight: FontWeight.w500),
                       ),
                       if (timestamp != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: 6),
                           child: Text(
                             _formatTimestamp(timestamp!),
-                            style: TextStyle(fontSize: fontSize * 0.7, color: Colors.grey[600]),
+                            style: TextStyle(fontSize: fontSize * 0.75, color: Colors.grey[600]),
                           ),
                         ),
                     ],
@@ -102,11 +105,11 @@ class ChatBubble extends StatelessWidget {
           ),
           if (isSender)
             Padding(
-              padding: const EdgeInsets.only(left: 6.0),
+              padding: const EdgeInsets.only(left: 8.0),
               child: CircleAvatar(
                 radius: 16,
-                backgroundColor: Colors.blue[400],
-                child: Text(_getInitials(senderName), style: TextStyle(fontSize: fontSize * 0.8, color: Colors.white)),
+                backgroundColor: senderProfile,
+                child: Text(_getInitials(senderName), style: TextStyle(fontSize: fontSize * 0.8, color: Color(0xFF222B45), fontWeight: FontWeight.bold)),
               ),
             ),
         ],

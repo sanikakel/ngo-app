@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../widgets/dashboard_nav_bar.dart';
 import '../chat/help_chat_screen.dart';
 import '../accessibility/font_size_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +9,7 @@ import '../widgets/dashboard_card.dart';
 import 'my_tasks_screen.dart';
 import '../settings/settings_screen.dart';
 import '../widgets/placeholder_screen.dart';
+import '../resources/upload_resource_screen.dart';
 import '../profile/profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/auth_wrapper.dart';
@@ -24,29 +27,25 @@ class VolunteerHome extends StatelessWidget {
     final List<_DashboardCardData> cards = [
       _DashboardCardData(
         color: Colors.blue.shade400,
-        icon: Icons.assignment_turned_in,
-        title: "Assigned Tasks",
+        icon: Icons.cloud_upload,
+        title: 'Upload Resources',
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => PlaceholderScreen(
-              title: 'Assigned Tasks',
-              message: 'This feature will be available soon.',
-              icon: Icons.assignment_turned_in,
-            ),
+            builder: (_) => UploadResourceScreen(fontSize: fSize + 2),
           ),
         ),
       ),
       _DashboardCardData(
         color: Colors.amber.shade600,
         icon: Icons.info_outline,
-        title: "Volunteer Resources",
+        title: 'Volunteer Resources',
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => PlaceholderScreen(
               title: 'Volunteer Resources',
-              message: 'This feature will be available soon.',
+              message: 'Feature coming soon',
               icon: Icons.info_outline,
             ),
           ),
@@ -55,7 +54,7 @@ class VolunteerHome extends StatelessWidget {
       _DashboardCardData(
         color: Colors.redAccent.shade200,
         icon: Icons.chat_bubble_outline,
-        title: "Chat Helpline",
+        title: 'Chat Helpline',
         onTap: () async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
@@ -76,8 +75,8 @@ class VolunteerHome extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
+          appBar: AppBar(
+            title: Row(
           children: [
             Image.asset(
               'assets/Yes I Can Mini Logo.png',
@@ -151,10 +150,11 @@ class VolunteerHome extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _DashboardNavBar(
-        fontSize: fSize,
-        fontSizeNotifier: fontSizeNotifier,
+      bottomNavigationBar: DashboardNavBar(
+        fontSize: fontSizeNotifier.value,
         currentIndex: 0,
+        fontSizeNotifier: fontSizeNotifier,
+        role: 'volunteer',
       ),
     );
   }
@@ -166,75 +166,4 @@ class _DashboardCardData {
   final String title;
   final VoidCallback onTap;
   _DashboardCardData({required this.color, required this.icon, required this.title, required this.onTap});
-}
-
-class _DashboardNavBar extends StatelessWidget {
-  final double fontSize;
-  final int currentIndex;
-  final FontSizeNotifier fontSizeNotifier;
-  const _DashboardNavBar({required this.fontSize, this.currentIndex = 0, required this.fontSizeNotifier});
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedFontSize: fontSize,
-      unselectedFontSize: fontSize,
-      currentIndex: currentIndex,
-      selectedItemColor: Color(0xFF2DBEF4),
-      unselectedItemColor: Color(0xFF444B54),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.play_circle_filled), label: 'My Tasks'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chat Helpline'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-      ],
-      onTap: (i) {
-        if (i == currentIndex) return;
-        switch (i) {
-          case 0:
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => VolunteerHome(fontSizeNotifier: fontSizeNotifier),
-              ),
-            );
-            break;
-          case 1:
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MyTasksScreen(fontSizeNotifier: fontSizeNotifier),
-              ),
-            );
-            break;
-          case 2:
-            () async {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-                final role = doc.data()?['role'];
-                if (role == 'volunteer') {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => VolunteerBeneficiaryListScreen(fontSizeNotifier: fontSizeNotifier),
-                  ));
-                } else {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => HelpChatScreen(fontSizeNotifier: fontSizeNotifier),
-                  ));
-                }
-              }
-            }();
-            break;
-          case 3:
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SettingsScreen(fontSizeNotifier: fontSizeNotifier),
-              ),
-            );
-            break;
-        }
-      },
-    );
-  }
 }

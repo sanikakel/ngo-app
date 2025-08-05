@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
+
+
 import '../accessibility/font_size_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../widgets/draggable_tts_fab.dart';
+
 
 class SignUpScreen extends StatefulWidget {
   final FontSizeNotifier fontSizeNotifier;
@@ -84,14 +89,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: null,
+      appBar: AppBar(
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Column(
+            physics: BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -99,7 +119,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     children: [
                       Image.asset('assets/Yes I Can Mini Logo.png', width: 48, height: 48),
                       SizedBox(width: 8),
-                      Text('Yes I Can!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0057B8))),
+                      Text('Yes I Can', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0057B8))),
                     ],
                   ),
                   SizedBox(height: 32),
@@ -115,7 +135,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      labelText: "Name",
+                      labelText: 'Full Name',
                       prefixIcon: Icon(Icons.person_outline),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
@@ -126,7 +146,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextField(
                     controller: _emailController,
                     decoration: InputDecoration(
-                      labelText: "Email",
+                      labelText: 'Email',
                       prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
@@ -137,7 +157,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   TextField(
                     controller: _passwordController,
                     decoration: InputDecoration(
-                      labelText: "Password",
+                      labelText: 'Password',
                       prefixIcon: Icon(Icons.lock_outline),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
@@ -150,7 +170,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   DropdownButtonFormField<String>(
                     value: _selectedRole,
                     decoration: InputDecoration(
-                      labelText: "Select an option",
+                      labelText: 'Select an option',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
                     ),
@@ -187,7 +207,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       SizedBox(width: 6),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: Text('Sign in', style: TextStyle(fontSize: 15, color: Color(0xFF2DBEF4), fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                        child: Text('Sign In', style: TextStyle(fontSize: 15, color: Color(0xFF2DBEF4), fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
                       ),
                     ],
                   ),
@@ -198,6 +218,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+  floatingActionButton: DraggableTTSFab(
+    text: 'Sign up for an account. Enter your details and select your role.',
+    fontSize: widget.fontSizeNotifier.value,
+    volume: 1.0,
+  ),
+);
   }
 }

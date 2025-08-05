@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../accessibility/font_size_provider.dart';
 
 class MyCoursesScreen extends StatelessWidget {
@@ -8,9 +9,15 @@ class MyCoursesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('My Courses', style: TextStyle(fontSize: fontSizeNotifier.value))),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text('My Courses', style: TextStyle(fontSize: fontSizeNotifier.value)),
+      ),
       body: Center(
-        child: Text('Your enrolled courses will appear here.', style: TextStyle(fontSize: fontSizeNotifier.value)),
+        child: Text('My Courses', style: TextStyle(fontSize: fontSizeNotifier.value)),
       ),
     );
   }

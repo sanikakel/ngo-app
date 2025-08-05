@@ -22,7 +22,7 @@ class InfoCard extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Could not open the resource")),
+        SnackBar(content: Text('Could not open resource.')),
       );
     }
   }
@@ -32,7 +32,7 @@ class InfoCard extends StatelessWidget {
       await launchUrl(Uri.parse(url!));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Could not open the resource.")),
+        SnackBar(content: Text('Could not open resource.')),
       );
     }
   }
@@ -44,7 +44,7 @@ class InfoCard extends StatelessWidget {
         await launchUrl(Uri.parse(url!));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Could not open the resource.")),
+          SnackBar(content: Text('Could not open resource.')),
         );
       }
     }

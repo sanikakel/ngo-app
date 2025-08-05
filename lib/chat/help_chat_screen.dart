@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:ngo_app/widgets/chat_bubble.dart';
+import '../widgets/dashboard_nav_bar.dart';
+import '../widgets/draggable_tts_fab.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../accessibility/font_size_provider.dart';
-import '../widgets/chat_bubble.dart';
+
+
+
 import '../profile/profile_screen.dart';
 
 class HelpChatScreen extends StatefulWidget {
@@ -73,19 +78,19 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
       builder: (ctx) {
         final controller = TextEditingController();
         return AlertDialog(
-          title: Text("Answer Question", style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
+          title: Text('Answer Question', style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
           content: TextField(
             controller: controller,
-            decoration: InputDecoration(hintText: "Enter your answer"),
+            decoration: InputDecoration(hintText: 'Enter your answer'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, null),
-              child: Text("Cancel", style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
+              child: Text('Cancel', style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: Text("Submit", style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
+              child: Text('Submit', style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
             ),
           ],
         );
@@ -108,56 +113,85 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
 
     // Volunteer view: show chat for selected beneficiary
     if (widget.isVolunteerView) {
-      return Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          title: Row(
-            children: [
-              widget.beneficiaryProfilePic != null && widget.beneficiaryProfilePic!.isNotEmpty
-                  ? CircleAvatar(backgroundImage: NetworkImage(widget.beneficiaryProfilePic!), radius: 18)
-                  : CircleAvatar(child: Text(_getInitials(widget.beneficiaryName ?? '')), radius: 18, backgroundColor: Colors.blue[200]),
-              SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(widget.beneficiaryName ?? '', style: TextStyle(fontSize: widget.fontSizeNotifier.value, color: Colors.blue[900], fontWeight: FontWeight.bold)),
-                  if ((widget.beneficiaryCategory ?? '').isNotEmpty)
-                    Text(widget.beneficiaryCategory!, style: TextStyle(fontSize: widget.fontSizeNotifier.value * 0.85, color: Colors.grey[600])),
-                ],
+      return WillPopScope(
+        onWillPop: () async {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+          return false;
+        },
+        child: Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: Colors.white,
+                title: Row(
+                  children: [
+                    widget.beneficiaryProfilePic != null && widget.beneficiaryProfilePic!.isNotEmpty
+                        ? CircleAvatar(backgroundImage: NetworkImage(widget.beneficiaryProfilePic!), radius: 18)
+                        : Icon(Icons.account_circle, color: Colors.blue[900], size: 36),
+                    SizedBox(width: 10),
+                    Text(widget.beneficiaryName ?? "Beneficiary", style: TextStyle(fontSize: widget.fontSizeNotifier.value, color: Colors.blue[900], fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
+                  onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                ),
               ),
-            ],
-          ),
-          leading: BackButton(color: Colors.blue[900]),
-
-        ),
-        backgroundColor: Color(0xFFF6F8FB),
-        body: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            FocusScope.of(context).unfocus();
-          },
-          child: _buildChatBody(context, beneficiaryId: widget.beneficiaryId, isVolunteer: true),
+              backgroundColor: Color(0xFFF6F8FB),
+              body: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                },
+                child: _buildChatBody(context, beneficiaryId: widget.beneficiaryId, isVolunteer: true),
+              ),
+            ),
+            DraggableTTSFab(
+              text: _getChatScreenText(),
+              fontSize: widget.fontSizeNotifier.value,
+              volume: 1.0,
+              initialAlignment: Alignment.topRight,
+            ),
+          ],
         ),
       );
     }
 
     // Beneficiary view: show their own chat
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: Text("Help Chat", style: TextStyle(fontSize: widget.fontSizeNotifier.value, color: Colors.blue[900], fontWeight: FontWeight.bold)),
-        leading: BackButton(color: Colors.blue[900]),
-
-      ),
-      backgroundColor: Color(0xFFF6F8FB),
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: _buildChatBody(context, beneficiaryId: user.uid, isVolunteer: false),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return false;
+      },
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: Colors.white,
+              title: Text('Help Chat', style: TextStyle(fontSize: widget.fontSizeNotifier.value, color: Colors.blue[900], fontWeight: FontWeight.bold)),
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
+                onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+              ),
+            ),
+            backgroundColor: Color(0xFFF6F8FB),
+            body: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              child: _buildChatBody(context, beneficiaryId: user.uid, isVolunteer: false),
+            ),
+          ),
+          DraggableTTSFab(
+            text: _getChatScreenText(),
+            fontSize: widget.fontSizeNotifier.value,
+            volume: 1.0,
+            initialAlignment: Alignment.topRight,
+          ),
+        ],
       ),
     );
   }
@@ -165,7 +199,7 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
   Widget _buildChatBody(BuildContext context, {required String? beneficiaryId, required bool isVolunteer}) {
     debugPrint('Volunteer Chat Debug: beneficiaryId = \\${beneficiaryId}');
     if (isVolunteer && (beneficiaryId == null || beneficiaryId.isEmpty)) {
-      return Center(child: Text("No beneficiary selected. (Debug: beneficiaryId is null or empty)"));
+      return Center(child: Text('No beneficiary selected (debug)'));
     }
     return SafeArea(
       child: Column(
@@ -194,13 +228,13 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                 builder: (context, snapshot) {
                   debugPrint('Volunteer Chat Debug: snapshot = \\${snapshot.toString()}');
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error loading chat: \\${snapshot.error}', style: TextStyle(color: Colors.red)));
+                    return Center(child: Text('Error loading chat: \'${snapshot.error}\'', style: TextStyle(color: Colors.red)));
                   }
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
                   }
                   if (!snapshot.hasData) {
-                    return Center(child: Text('No chat data found.'));
+                    return Center(child: Text('No chat data found'));
                   }
                   final docs = snapshot.data!.docs
                       .where((doc) => doc['timestamp'] != null)
@@ -208,11 +242,7 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                   debugPrint('Volunteer Chat Debug: docs.length = \\${docs.length}');
                   if (docs.isEmpty) {
                     return Center(
-                      child: Text(
-                        "No messages yet. Start the conversation!",
-                        style: TextStyle(fontSize: widget.fontSizeNotifier.value * 0.95, color: Colors.grey[500]),
-                        textAlign: TextAlign.center,
-                      ),
+                      child: Text('No messages yet', style: TextStyle(fontSize: widget.fontSizeNotifier.value * 0.95, color: Colors.grey[500]), textAlign: TextAlign.center),
                     );
                   }
                   return ListView(
@@ -228,7 +258,7 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                       bubbles.add(ChatBubble(
                         text: data['text'] ?? "",
                         isSender: isSender,
-                        senderName: isSender ? "You" : (senderRole == 'volunteer' ? "Volunteer" : "Beneficiary"),
+                        senderName: isSender ? 'You' : (senderRole == 'volunteer' ? 'Volunteer' : 'Beneficiary'),
                         timestamp: msgTime,
                         fontSize: widget.fontSizeNotifier.value,
                         senderColor: isSender ? Colors.blue.shade100 : Colors.grey.shade200,
@@ -257,7 +287,7 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
           // Input bar always at the bottom
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -271,30 +301,51 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _questionController,
-                    style: TextStyle(fontSize: widget.fontSizeNotifier.value),
-                    decoration: InputDecoration(
-                      hintText: "Type your message...",
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(fontSize: widget.fontSizeNotifier.value * 0.95, color: Colors.grey[500]),
-                      contentPadding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF6F8FB),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Color(0xFFE0E3E7), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 4,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _questionController,
+                      style: TextStyle(fontSize: widget.fontSizeNotifier.value),
+                      decoration: InputDecoration(
+                        hintText: 'Type your message',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(fontSize: widget.fontSizeNotifier.value * 0.95, color: Colors.grey[500]),
+                        contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-  print('DEBUG: Post button pressed');
-  _submitQuestion();
-},
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                    backgroundColor: Colors.blue[700],
-                    padding: EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    elevation: 0,
+                SizedBox(width: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue[700],
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.12),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Text("Post", style: TextStyle(fontSize: widget.fontSizeNotifier.value, color: Colors.white)),
+                  child: IconButton(
+                    onPressed: () {
+                      _submitQuestion();
+                    },
+                    icon: Icon(Icons.send_rounded, color: Colors.white, size: widget.fontSizeNotifier.value + 4),
+                    tooltip: 'Send',
+                  ),
                 ),
               ],
             ),
@@ -308,5 +359,9 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
   String _getInitials(String? name) {
     if (name == null || name.isEmpty) return "";
     return name.trim().split(" ").map((e) => e[0]).take(2).join().toUpperCase();
+  }
+
+  String _getChatScreenText() {
+    return (widget.beneficiaryName ?? "Help Chat") + ". Chat screen.";
   }
 }

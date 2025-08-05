@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../accessibility/font_size_provider.dart';
+import '../widgets/draggable_tts_fab.dart';
 import 'help_chat_screen.dart';
+import '../home/volunteer_home.dart';
 
 class VolunteerBeneficiaryListScreen extends StatelessWidget {
   final FontSizeNotifier fontSizeNotifier;
@@ -16,13 +18,65 @@ class VolunteerBeneficiaryListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Chat Helpline', style: TextStyle(fontSize: fontSizeNotifier.value)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: BackButton(color: Colors.blue[900]),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(70),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Material(
+                    color: Colors.transparent,
+                    shape: CircleBorder(),
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
+                      onPressed: () {
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) => VolunteerHome(fontSizeNotifier: fontSizeNotifier),
+    ),
+    (route) => false,
+  );
+},
+                      tooltip: 'Back',
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Beneficiaries',
+                    style: TextStyle(
+                      fontSize: fontSizeNotifier.value + 2,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[900],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16),
+              ],
+            ),
+          ),
+        ),
       ),
       backgroundColor: Color(0xFFF6F8FB),
+      floatingActionButton: DraggableTTSFab(
+        text: '', // Required by constructor, ignored by extractor
+        fontSize: fontSizeNotifier.value,
+        volume: 1.0,
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('users').where('role', whereIn: ['underprivileged', 'special', 'senior']).snapshots(),
         builder: (context, snapshot) {

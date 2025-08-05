@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../accessibility/font_size_provider.dart';
@@ -10,11 +11,11 @@ class CategorySelectionScreen extends StatelessWidget {
   CategorySelectionScreen({super.key, required this.fontSizeNotifier});
 
   final List<Map<String, String>> categories = [
-    {'label': 'Underprivileged Girl/Woman', 'value': 'underprivileged'},
-    {'label': 'Specially-Abled', 'value': 'special'},
-    {'label': 'Senior Citizen', 'value': 'senior'},
-    {'label': 'Volunteer', 'value': 'volunteer'},
-  ];
+  {'label': 'Underprivileged', 'value': 'underprivileged'},
+  {'label': 'Specially-abled', 'value': 'special'},
+  {'label': 'Senior Citizen', 'value': 'senior'},
+  {'label': 'Volunteer', 'value': 'volunteer'},
+];
 
   void _selectCategory(BuildContext context, String category) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -52,12 +53,12 @@ class CategorySelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Select Your Category", style: TextStyle(fontSize: fontSizeNotifier.value)),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: () async {
+  title: Text('Select your category', style: TextStyle(fontSize: fontSizeNotifier.value)),
+  actions: [
+    IconButton(
+      icon: Icon(Icons.logout),
+      tooltip: 'Sign Out',
+      onPressed: () async {
               await FirebaseAuth.instance.signOut();
               Navigator.of(context).popUntil((route) => route.isFirst);
             },

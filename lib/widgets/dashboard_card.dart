@@ -23,8 +23,8 @@ class DashboardCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        padding: const EdgeInsets.all(20),
+        margin: EdgeInsets.symmetric(vertical: fontSize * 0.3),
+        padding: EdgeInsets.all(fontSize),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(20),
@@ -43,10 +43,10 @@ class DashboardCard extends StatelessWidget {
                 color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              padding: const EdgeInsets.all(12),
-              child: Icon(icon, color: Colors.white, size: 32),
+              padding: EdgeInsets.all(fontSize * 0.75),
+              child: Icon(icon, color: Colors.white, size: fontSize * 1.6),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: fontSize * 0.9),
             Expanded(
               child: Text(
                 title,

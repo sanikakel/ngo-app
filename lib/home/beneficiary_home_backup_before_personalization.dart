@@ -1,3 +1,10 @@
+// BACKUP OF beneficiary_home.dart BEFORE PERSONALIZATION
+// This file was created automatically before refactoring for personalized greetings.
+
+// DO NOT EDIT. Safe to delete after confirming new greeting works.
+
+// --- START OF ORIGINAL FILE ---
+
 import 'package:flutter/material.dart';
 
 import '../widgets/dashboard_nav_bar.dart';
@@ -14,63 +21,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/auth_wrapper.dart';
 import '../profile/profile_screen.dart';
 import '../widgets/pickup_card.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../resources/beneficiary_resources_screen.dart';
 
-class BeneficiaryHome extends StatefulWidget {
+class BeneficiaryHome extends StatelessWidget {
   final String category; // 'underprivileged', 'special', 'senior'
   final FontSizeNotifier fontSizeNotifier;
   const BeneficiaryHome({required this.category, required this.fontSizeNotifier, super.key});
 
   @override
-  State<BeneficiaryHome> createState() => _BeneficiaryHomeState();
-}
-
-class _BeneficiaryHomeState extends State<BeneficiaryHome> {
-  String? userName;
-  bool loadingName = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserName();
-  }
-
-  Future<void> _fetchUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    String? fetchedName;
-    if (user != null) {
-      try {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        final data = userDoc.data();
-        fetchedName = data?['name'];
-      } catch (_) {}
-    }
-    setState(() {
-      userName = fetchedName;
-      loadingName = false;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Dashboard config based on category
     String greeting;
     List<_DashboardCardData> cards;
-    final category = widget.category;
-    final fontSizeNotifier = widget.fontSizeNotifier;
-
-    // Personalized greeting logic
-    if (loadingName) {
-      greeting = 'Welcome back!';
-    } else if (userName != null && userName!.trim().isNotEmpty) {
-      greeting = 'Welcome back ${userName!.split(' ').first}!';
-    } else {
-      greeting = 'Welcome back!';
-    }
-
     switch (category) {
       case 'underprivileged':
+        greeting = 'Welcome back!';
         cards = [
           _DashboardCardData(
             color: Color(0xFF2DBEF4),
@@ -103,8 +67,8 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
           ),
           _DashboardCardData(
             color: Color(0xFFFF9800),
-            icon: Icons.build,
-            title: 'Vocational Training Modules',
+            icon: Icons.favorite,
+            title: 'Health and Wellness',
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpeciallyAbledInfoScreen(fontSizeNotifier: fontSizeNotifier))),
           ),
           _DashboardCardData(
@@ -116,7 +80,7 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
         ];
         break;
       case 'senior':
-        greeting = 'Welcome back!';
+        greeting = 'Welcome!';
         cards = [
           _DashboardCardData(
             color: Color(0xFF2DBEF4),
@@ -126,59 +90,24 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
           ),
           _DashboardCardData(
             color: Color(0xFFFF9800),
-            icon: Icons.extension,
-            title: "Memory-Boosting Games",
+            icon: Icons.favorite,
+            title: 'Health and Wellness',
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SeniorCitizenInfoScreen(fontSizeNotifier: fontSizeNotifier))),
           ),
           _DashboardCardData(
             color: Color(0xFFFF5252),
             icon: Icons.chat_bubble_outline,
-            title: "Chat Helpline",
+            title: 'Chat Helpline',
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HelpChatScreen(fontSizeNotifier: fontSizeNotifier))),
           ),
         ];
         break;
       default:
-        greeting = "Welcome!";
+        greeting = 'Welcome!';
         cards = [];
     }
-
     return Scaffold(
-          appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/Yes I Can Mini Logo.png',
-              width: 36,
-              height: 36,
-            ),
-            const SizedBox(width: 10),
-            Text("Yes I Can!", style: TextStyle(fontSize: fontSizeNotifier.value + 4, fontWeight: FontWeight.bold)),
-            Spacer(),
-            IconButton(
-              icon: Icon(Icons.account_circle, color: Colors.grey.shade800),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProfileScreen(fontSizeNotifier: fontSizeNotifier),
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.logout, color: Colors.redAccent),
-              tooltip: 'Sign Out',
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => AuthWrapper(fontSizeNotifier: fontSizeNotifier)),
-                  (route) => false,
-                );
-              },
-            ),
-          ],
-        ),
+      appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -200,24 +129,20 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
               ),
               SizedBox(height: 8),
               Text(
-                "What would you like to learn today?",
+                'What would you like to learn today?',
                 style: TextStyle(
                   fontSize: fontSizeNotifier.value + 2,
                   color: Colors.grey.shade800,
                 ),
               ),
               SizedBox(height: 18),
-              for (int i = 0; i < cards.length; i++) ...[
-                DashboardCard(
-                  color: cards[i].color,
-                  icon: cards[i].icon,
-                  title: cards[i].title,
-                  onTap: cards[i].onTap,
-                  fontSize: fontSizeNotifier.value + 2,
-                  textColor: (cards[i].color.value == 0xFFFFF59E) ? Colors.black : null,
-                ),
-                if (i != cards.length - 1) const SizedBox(height: 16),
-              ],
+              ...cards.map((card) => DashboardCard(
+                color: card.color,
+                icon: card.icon,
+                title: card.title,
+                onTap: card.onTap,
+                fontSize: fontSizeNotifier.value + 2,
+              )),
               SizedBox(height: 24),
             ],
           ),
@@ -228,17 +153,9 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
         currentIndex: 0,
         fontSizeNotifier: fontSizeNotifier,
         role: 'beneficiary',
+        category: category,
       ),
     );
-
-  }
-
-  String _getHomeScreenText(String greeting, List<_DashboardCardData> cards) {
-    String text = greeting + '. What would you like to learn today?';
-    for (final card in cards) {
-      text += '. ' + card.title;
-    }
-    return text;
   }
 }
 
@@ -249,4 +166,4 @@ class _DashboardCardData {
   final VoidCallback onTap;
   _DashboardCardData({required this.color, required this.icon, required this.title, required this.onTap});
 }
-
+// --- END OF ORIGINAL FILE ---
