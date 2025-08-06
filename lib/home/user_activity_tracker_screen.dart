@@ -263,6 +263,8 @@ class _UserActivityTrackerScreenState extends State<UserActivityTrackerScreen> {
                 tooltip: 'Refresh',
               ),
             ],
+            toolbarHeight: 80, // Increased height
+            titleSpacing: 20, // Increased spacing
           ),
           body: SingleChildScrollView(
             child: Column(

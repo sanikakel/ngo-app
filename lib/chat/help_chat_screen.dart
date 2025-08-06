@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:ngo_app/widgets/chat_bubble.dart';
-import '../widgets/dashboard_nav_bar.dart';
-import '../widgets/draggable_tts_fab.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/dashboard_nav_bar.dart';
+import '../widgets/chat_bubble.dart';
 import '../accessibility/font_size_provider.dart';
-
-
-
+import '../models/question_model.dart';
 import '../profile/profile_screen.dart';
+import '../widgets/draggable_tts_fab.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/error_handler.dart';
+
 
 class HelpChatScreen extends StatefulWidget {
   final FontSizeNotifier fontSizeNotifier;
@@ -44,10 +44,15 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
   }
 
   Future<void> _fetchUserRole() async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    setState(() {
-      userRole = doc.data()?['role'];
-    });
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      setState(() {
+        userRole = doc.data()?['role'];
+      });
+    } catch (e) {
+      print('Error fetching user role: $e');
+      // Don't show error to user, just continue with default role
+    }
   }
 
   Future<void> _submitQuestion() async {
@@ -68,7 +73,7 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
       print('DEBUG: Message sent!');
     } catch (e) {
       print('ERROR sending message: $e');
-      // Optionally, show a SnackBar or dialog
+      ErrorHandler.showErrorSnackBar(context, e);
     }
   }
 
@@ -122,21 +127,15 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
           children: [
             Scaffold(
               appBar: AppBar(
-                elevation: 0,
                 backgroundColor: Colors.white,
-                title: Row(
-                  children: [
-                    widget.beneficiaryProfilePic != null && widget.beneficiaryProfilePic!.isNotEmpty
-                        ? CircleAvatar(backgroundImage: NetworkImage(widget.beneficiaryProfilePic!), radius: 18)
-                        : Icon(Icons.account_circle, color: Colors.blue[900], size: 36),
-                    SizedBox(width: 10),
-                    Text(widget.beneficiaryName ?? "Beneficiary", style: TextStyle(fontSize: widget.fontSizeNotifier.value, color: Colors.blue[900], fontWeight: FontWeight.bold)),
-                  ],
-                ),
+                elevation: 0,
+                title: Text('Chat Helpline', style: TextStyle(fontSize: widget.fontSizeNotifier.value + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
-                  onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                  icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
+                toolbarHeight: 80, // Increased height
+                titleSpacing: 20, // Increased spacing
               ),
               backgroundColor: Color(0xFFF6F8FB),
               body: GestureDetector(
@@ -174,6 +173,8 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                 icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
                 onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
               ),
+              toolbarHeight: 80, // Increased height
+              titleSpacing: 20, // Increased spacing
             ),
             backgroundColor: Color(0xFFF6F8FB),
             body: GestureDetector(

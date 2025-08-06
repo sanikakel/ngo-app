@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../accessibility/font_size_provider.dart';
 import '../accessibility/screen_reader_volume_notifier.dart';
 import '../accessibility/language_provider.dart';
+import '../widgets/draggable_tts_fab.dart';
 
 
 class AccessibilitySettings extends StatelessWidget {
@@ -12,21 +13,21 @@ class AccessibilitySettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Accessibility options',
-          style: TextStyle(
-            fontSize: fontSizeNotifier.value + 6,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF0057B8),
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            title: Text('Accessibility Settings', style: TextStyle(fontSize: fontSizeNotifier.value + 2, color: const Color(0xFF0057B8), fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: const Color(0xFF0057B8)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            toolbarHeight: 80, // Increased height
+            titleSpacing: 20, // Increased spacing
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: ListView(
+          body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         children: [
           // Removed App Language section and LanguageSelector
@@ -120,30 +121,15 @@ class AccessibilitySettings extends StatelessWidget {
             ),
             contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           ),
-          
-          // Add a test button for the screen reader
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ElevatedButton.icon(
-              icon: Icon(Icons.play_arrow),
-              label: Text('Test Screen Reader', 
-                style: TextStyle(fontSize: fontSizeNotifier.value)),
-              onPressed: () {
-                // Show a snackbar with instructions
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Tap the floating screen reader button to hear screen content'),
-                  duration: Duration(seconds: 3),
-                ));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
         ],
       ),
+        ),
+        DraggableTTSFab(
+          text: 'Accessibility Settings. Font Size. Adjust Font Size. Screen Reader Settings. Screen Reader Volume. Test Screen Reader.',
+          fontSize: fontSizeNotifier.value,
+          volume: 1.0,
+        ),
+      ],
     );
   }
 }

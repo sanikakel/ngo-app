@@ -55,38 +55,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        title: Text('Settings', style: TextStyle(fontSize: fontSize + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
-          onPressed: () async {
-            // Fetch user role and category
-            final roleData = await UserRoleProvider.getUserRoleAndCategory();
-            final role = roleData['role'];
-            final category = roleData['category'];
-            final fontSizeNotifier = widget.fontSizeNotifier;
-            if (role == 'Volunteer') {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => VolunteerHome(fontSizeNotifier: fontSizeNotifier),
-                ),
-                (route) => false,
-              );
-            } else if (role == 'Beneficiary' && category != null) {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BeneficiaryHome(category: category, fontSizeNotifier: fontSizeNotifier),
-                ),
-                (route) => false,
-              );
-            } else {
-              // Fallback: just pop
-              Navigator.pop(context);
-            }
-          },
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Settings', style: TextStyle(fontSize: fontSize + 6, fontWeight: FontWeight.bold, color: Color(0xFF0057B8))),
-        centerTitle: true,
+        toolbarHeight: 80, // Increased height
+        titleSpacing: 20, // Increased spacing
       ),
       floatingActionButton: DraggableTTSFab(
         text: 'Settings screen. Profile, Notifications, Accessibility.',
@@ -106,6 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 iconColor: Color(0xFF0057B8),
                 title: 'Profile',
                 subtitle: 'View and edit your profile',
+                fontSize: fontSize,
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(
                     builder: (_) => ProfileScreen(fontSizeNotifier: widget.fontSizeNotifier),
@@ -118,6 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 iconColor: Color(0xFF0057B8),
                 title: 'Notifications',
                 subtitle: 'Notification preferences',
+                fontSize: fontSize,
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(
                     builder: (_) => NotificationsScreen(),
@@ -130,6 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 iconColor: Color(0xFF0057B8),
                 title: 'Accessibility',
                 subtitle: 'Accessibility options',
+                fontSize: fontSize,
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(
                     builder: (_) => AccessibilitySettings(fontSizeNotifier: widget.fontSizeNotifier),
@@ -150,6 +128,7 @@ class _SettingsCard extends StatelessWidget {
   final Color iconColor;
   final String title;
   final String subtitle;
+  final double fontSize;
   final VoidCallback onTap;
 
   const _SettingsCard({
@@ -157,6 +136,7 @@ class _SettingsCard extends StatelessWidget {
     required this.iconColor,
     required this.title,
     required this.subtitle,
+    required this.fontSize,
     required this.onTap,
     Key? key,
   }) : super(key: key);
@@ -187,9 +167,9 @@ class _SettingsCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF222B45))),
+                    Text(title, style: TextStyle(fontSize: fontSize + 2, fontWeight: FontWeight.bold, color: Color(0xFF222B45))),
                     SizedBox(height: 5),
-                    Text(subtitle, style: TextStyle(fontSize: 15, color: Colors.grey[700])),
+                    Text(subtitle, style: TextStyle(fontSize: fontSize - 1, color: Colors.grey[700])),
                   ],
                 ),
               ),

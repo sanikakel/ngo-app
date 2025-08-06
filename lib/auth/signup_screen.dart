@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-
+import '../utils/error_handler.dart';
 
 import '../accessibility/font_size_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -80,7 +80,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       Navigator.pop(context); // Return to SignInScreen (will redirect via AuthWrapper)
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _error = e.message;
+        _error = ErrorHandler.getUserFriendlyMessage(e);
+      });
+    } catch (e) {
+      setState(() {
+        _error = ErrorHandler.getUserFriendlyMessage(e);
       });
     } finally {
       setState(() {
@@ -93,14 +97,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
+        title: Text('Sign Up', style: TextStyle(fontSize: widget.fontSizeNotifier.value + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        toolbarHeight: 80, // Increased height
+        titleSpacing: 20, // Increased spacing
       ),
       backgroundColor: Colors.white,
       body: SafeArea(

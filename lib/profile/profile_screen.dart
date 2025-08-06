@@ -9,6 +9,7 @@ import '../auth/auth_wrapper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import '../utils/error_handler.dart';
 
 class ProfileScreen extends StatefulWidget {
   final FontSizeNotifier fontSizeNotifier;
@@ -29,28 +30,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isEditing = false;
 
   Future<void> pickAndUploadProfileImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
-    if (pickedFile == null) return;
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final file = File(pickedFile.path);
-    final storageRef = FirebaseStorage.instance.ref().child('profile_pics/${user.uid}.jpg');
     try {
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-      await user.updatePhotoURL(downloadUrl);
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({'photoURL': downloadUrl}, SetOptions(merge: true));
-      setState(() {
-        profilePicUrl = downloadUrl;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile picture updated!')),
-      );
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+      if (pickedFile == null) return;
+      
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ErrorHandler.showErrorSnackBar(context, 'User not authenticated. Please sign in again.');
+        return;
+      }
+      
+      // Check if the picked file has a valid path
+      if (pickedFile.path == null || pickedFile.path!.isEmpty) {
+        ErrorHandler.showErrorSnackBar(context, 'Failed to read image file. Please try again.');
+        return;
+      }
+      
+      final file = File(pickedFile.path!);
+      
+      // Check if file exists
+      if (!await file.exists()) {
+        ErrorHandler.showErrorSnackBar(context, 'Selected file does not exist. Please try again.');
+        return;
+      }
+      
+      final storageRef = FirebaseStorage.instance.ref().child('profile_pics/${user.uid}.jpg');
+      
+      try {
+        await storageRef.putFile(file);
+        final downloadUrl = await storageRef.getDownloadURL();
+        await user.updatePhotoURL(downloadUrl);
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({'photoURL': downloadUrl}, SetOptions(merge: true));
+        setState(() {
+          profilePicUrl = downloadUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profile picture updated!'),
+            backgroundColor: Colors.green[600],
+          ),
+        );
+      } catch (e) {
+        print('Upload error: $e');
+        ErrorHandler.showErrorSnackBar(context, e);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload image: ${e.toString()}')),
-      );
+      print('Image picker error: $e');
+      ErrorHandler.showErrorSnackBar(context, e);
     }
   }
 
@@ -151,34 +178,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
-        centerTitle: true,
-        title: Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: fontSize + 6,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF0057B8),
-          ),
-        ),
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(isEditing ? Icons.close : Icons.edit),
-            tooltip: isEditing ? 'Cancel' : 'Edit',
-            onPressed: () {
-              setState(() {
-                isEditing = !isEditing;
-              });
-            },
-          ),
-        ],
+        title: Text('Profile', style: TextStyle(fontSize: fontSize + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        toolbarHeight: 80, // Increased height
+        titleSpacing: 20, // Increased spacing
       ),
       floatingActionButton: DraggableTTSFab(
         text: 'Profile screen. View and edit your details.',
@@ -334,6 +342,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         leading: Icon(Icons.cake),
                         title: Text('Age', style: TextStyle(fontSize: widget.fontSizeNotifier.value)),
                         subtitle: Text((firestoreAge != null && firestoreAge!.isNotEmpty) ? firestoreAge! : 'Not set', style: TextStyle(fontSize: widget.fontSizeNotifier.value + 1)),
+                      ),
+                      SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: Icon(Icons.edit),
+                            label: Text('Edit Profile'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF0057B8),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                isEditing = true;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ],

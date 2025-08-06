@@ -6,13 +6,8 @@ import '../accessibility/font_size_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../home/volunteer_home.dart';
 import '../home/beneficiary_home.dart';
-import '../accessibility/screen_reader_volume_notifier.dart';
 import '../resources/beneficiary_resources_screen.dart' show BeneficiaryResourcesScreen;
-
-import 'package:ngo_app/widgets/draggable_tts_fab.dart';
-import 'package:provider/provider.dart';
-
-
+import '../utils/error_handler.dart';
 
 class AuthWrapper extends StatefulWidget {
   final FontSizeNotifier fontSizeNotifier;
@@ -25,6 +20,8 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
   // Track current route for context-aware TTS
   String _currentRouteName = '';
+  // Cache for user role to avoid repeated Firestore calls
+  Map<String, String> _userRoleCache = {};
   
   @override
   void initState() {
@@ -48,34 +45,62 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
 
   Future<Widget> _getHomeScreen(User user) async {
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      // Check cache first
+      if (_userRoleCache.containsKey(user.uid)) {
+        final role = _userRoleCache[user.uid]!;
+        _trackUserActivityInBackground(user.uid);
+        return _buildHomeScreen(role);
+      }
+
+      // Add timeout to prevent hanging
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(Duration(seconds: 10)); // 10 second timeout
+      
       final role = userDoc.data()?['role'] ?? 'beneficiary';
       
-      // Track user activity
-      await _trackUserActivity(user.uid);
+      // Cache the role
+      _userRoleCache[user.uid] = role;
       
-      if (role == 'volunteer') {
-        return VolunteerHome(fontSizeNotifier: widget.fontSizeNotifier);
-      } else {
-        // Default to beneficiary home, pass the role/category for customization
-        return BeneficiaryHome(category: role, fontSizeNotifier: widget.fontSizeNotifier);
-      }
+      // Track user activity in background (don't wait for it)
+      _trackUserActivityInBackground(user.uid);
+      
+      return _buildHomeScreen(role);
     } catch (e) {
       print('Error getting home screen: $e');
-      return BeneficiaryHome(category: 'underprivileged', fontSizeNotifier: widget.fontSizeNotifier);
+      // Return default screen on error with user-friendly message
+      return _buildHomeScreen('beneficiary');
     }
   }
 
-  Future<void> _trackUserActivity(String userId) async {
-    try {
-      final now = Timestamp.now();
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'lastLoginTimestamp': now,
-        'lastActivityTimestamp': now,
-      });
-    } catch (e) {
-      print('Error tracking user activity: $e');
+  Widget _buildHomeScreen(String role) {
+    if (role == 'volunteer') {
+      return VolunteerHome(fontSizeNotifier: widget.fontSizeNotifier);
+    } else {
+      // Default to beneficiary home, pass the role/category for customization
+      return BeneficiaryHome(category: role, fontSizeNotifier: widget.fontSizeNotifier);
     }
+  }
+
+  void _trackUserActivityInBackground(String userId) {
+    // Run in background without waiting
+    Future.delayed(Duration.zero, () async {
+      try {
+        final now = Timestamp.now();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .update({
+          'lastLoginTimestamp': now,
+          'lastActivityTimestamp': now,
+        }).timeout(Duration(seconds: 5)); // 5 second timeout
+      } catch (e) {
+        print('Error tracking user activity: $e');
+        // Don't show error to user, this is background operation
+      }
+    });
   }
 
   @override
@@ -86,18 +111,58 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Scaffold(body: Center(child: CircularProgressIndicator()));
-            } else if (snapshot.hasData) {
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Connecting to server...', style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              );
+            } else if (snapshot.hasData && snapshot.data != null) {
               // Fetch user role from Firestore and route accordingly
               return FutureBuilder<Widget>(
                 future: _getHomeScreen(snapshot.data!),
                 builder: (context, homeSnapshot) {
                   if (homeSnapshot.connectionState == ConnectionState.waiting) {
-                    return Scaffold(body: Center(child: CircularProgressIndicator()));
+                    return Scaffold(
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Loading your profile...', style: TextStyle(fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                    );
                   } else if (homeSnapshot.hasData) {
                     return homeSnapshot.data!;
                   } else {
-                    return Scaffold(body: Center(child: Text('Error loading user data')));
+                    return Scaffold(
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline, size: 48, color: Colors.red),
+                            SizedBox(height: 16),
+                            Text('Error loading user data', style: TextStyle(fontSize: 16)),
+                            SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {}); // Retry
+                              },
+                              child: Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   }
                 },
               );
@@ -176,37 +241,3 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
     return Alignment(0.95, -0.85);
   }
 }
-
-
-
-/*
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'auth_screens/signin_screen.dart';
-import 'home_router.dart';
-
-class AuthWrapper extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // Waiting for connection to Firebase
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        // If user is logged in
-        if (snapshot.hasData && snapshot.data != null) {
-          return HomeRouter(user: snapshot.data!);
-        }
-
-        // If user is NOT logged in
-        return SignInScreen();
-      },
-    );
-  }
-}
-*/

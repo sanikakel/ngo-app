@@ -15,6 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/auth_wrapper.dart';
 import '../widgets/draggable_tts_fab.dart';
 import 'user_activity_tracker_screen.dart';
+import '../utils/error_handler.dart';
 
 
 class VolunteerHome extends StatelessWidget {
@@ -56,15 +57,28 @@ class VolunteerHome extends StatelessWidget {
         onTap: () async {
   final user = FirebaseAuth.instance.currentUser;
   if (user != null) {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    final role = doc.data()?['role'];
-    if (role == 'volunteer') {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .timeout(Duration(seconds: 5)); // 5 second timeout
+      final role = doc.data()?['role'];
+      if (role == 'volunteer') {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => VolunteerBeneficiaryListScreen(fontSizeNotifier: fontSizeNotifier),
+        ));
+      } else {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => HelpChatScreen(fontSizeNotifier: fontSizeNotifier),
+        ));
+      }
+    } catch (e) {
+      print('Error checking user role: $e');
+      ErrorHandler.showErrorSnackBar(context, e);
+      // Default to volunteer screen on error
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => VolunteerBeneficiaryListScreen(fontSizeNotifier: fontSizeNotifier),
-      ));
-    } else {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => HelpChatScreen(fontSizeNotifier: fontSizeNotifier),
       ));
     }
   }
@@ -120,6 +134,8 @@ class VolunteerHome extends StatelessWidget {
             automaticallyImplyLeading: false,
             backgroundColor: Colors.white,
             elevation: 0,
+            toolbarHeight: 80, // Increased height
+            titleSpacing: 20, // Increased spacing
           ),
           backgroundColor: Color(0xFFF6F8FB),
           body: SingleChildScrollView(

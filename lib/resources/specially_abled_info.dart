@@ -52,13 +52,28 @@ class _SpeciallyAbledInfoScreenState extends State<SpeciallyAbledInfoScreen> {
   }
 
   Future<void> _launchLink(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    try {
+      final uri = Uri.parse(url);
+      
+      if (await canLaunchUrl(uri)) {
+        final result = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        
+        if (!result && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open link. Please try again.')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open link. Please check your internet connection.')),
+          );
+        }
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open link. Please check your internet connection.')),
+          SnackBar(content: Text('Error opening link: $e')),
         );
       }
     }
@@ -83,6 +98,8 @@ class _SpeciallyAbledInfoScreenState extends State<SpeciallyAbledInfoScreen> {
             elevation: 0,
             title: Text('Helpful Links', style: TextStyle(fontSize: fontSize + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
             leading: BackButton(color: Color(0xFF0057B8)),
+            toolbarHeight: 80, // Increased height
+            titleSpacing: 20, // Increased spacing
           ),
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),

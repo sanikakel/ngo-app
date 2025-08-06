@@ -82,6 +82,8 @@ class _UnderprivilegedInfoScreenState extends State<UnderprivilegedInfoScreen> {
             elevation: 0,
             title: Text('Health & Wellness', style: TextStyle(fontSize: fontSize + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
             leading: BackButton(color: Color(0xFF0057B8)),
+            toolbarHeight: 80, // Increased height
+            titleSpacing: 20, // Increased spacing
       ),
       body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),

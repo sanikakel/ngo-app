@@ -53,17 +53,15 @@ class CategorySelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: Text('Select your category', style: TextStyle(fontSize: fontSizeNotifier.value)),
-  actions: [
-    IconButton(
-      icon: Icon(Icons.logout),
-      tooltip: 'Sign Out',
-      onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-          ),
-        ],
+        title: Text('Select Category', style: TextStyle(fontSize: fontSizeNotifier.value + 2, color: Color(0xFF0057B8), fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        toolbarHeight: 80, // Increased height
+        titleSpacing: 20, // Increased spacing
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

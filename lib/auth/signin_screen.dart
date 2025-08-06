@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'dart:async';
+import '../utils/network_utils.dart';
+import '../utils/error_handler.dart';
 
 import 'signup_screen.dart';
 import '../accessibility/font_size_provider.dart';
-import '../widgets/draggable_tts_fab.dart';
 
 class SignInScreen extends StatefulWidget {
   final FontSizeNotifier fontSizeNotifier;
@@ -30,13 +31,39 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     try {
+      // Check network connectivity first
+      final isConnected = await NetworkUtils.isConnected();
+      if (!isConnected) {
+        setState(() {
+          _error = 'No internet connection. Please check your network and try again.';
+        });
+        return;
+      }
+
+      // Check if Firebase is reachable
+      final isFirebaseReachable = await NetworkUtils.isFirebaseReachable();
+      if (!isFirebaseReachable) {
+        setState(() {
+          _error = 'Unable to connect to authentication server. Please try again later.';
+        });
+        return;
+      }
+
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-      );
+      ).timeout(Duration(seconds: 15)); // 15 second timeout for sign-in
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _error = 'Incorrect email or password. Please try again.';
+        _error = ErrorHandler.getUserFriendlyMessage(e);
+      });
+    } on TimeoutException catch (e) {
+      setState(() {
+        _error = 'Sign-in is taking too long. Please check your internet connection and try again.';
+      });
+    } catch (e) {
+      setState(() {
+        _error = ErrorHandler.getUserFriendlyMessage(e);
       });
     } finally {
       setState(() {
@@ -49,15 +76,12 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  leading: Navigator.of(context).canPop()
-      ? IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFF0057B8)),
-          onPressed: () => Navigator.of(context).pop(),
-        )
-      : null,
-  backgroundColor: Colors.white,
-  elevation: 0,
-),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false, // Remove back button
+        toolbarHeight: 80, // Increased height
+        titleSpacing: 20, // Increased spacing
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(

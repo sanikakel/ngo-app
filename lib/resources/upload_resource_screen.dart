@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io'; // Added for File
+import '../utils/error_handler.dart';
 
 class UploadResourceScreen extends StatefulWidget {
   final double fontSize;
@@ -28,48 +31,186 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
     {'label': 'Senior Citizen', 'value': 'senior'},
   ];
 
+  // Test Firebase Storage connection
+  Future<bool> _testFirebaseStorage() async {
+    try {
+      print('DEBUG: Testing Firebase Storage connection...');
+      final testRef = FirebaseStorage.instance.ref().child('test/connection_test.txt');
+      await testRef.putString('test');
+      await testRef.delete();
+      print('DEBUG: Firebase Storage connection test successful');
+      return true;
+    } catch (e) {
+      print('DEBUG: Firebase Storage connection test failed: $e');
+      return false;
+    }
+  }
+
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles();
-    if (result != null && result.files.single.path != null) {
-      setState(() { _uploading = true; _error = null; });
-      final file = result.files.single;
-      final ref = FirebaseStorage.instance.ref().child('resources/${DateTime.now().millisecondsSinceEpoch}_${file.name}');
-      try {
-        final uploadTask = await ref.putData(file.bytes!);
-        final url = await ref.getDownloadURL();
+    try {
+      print('DEBUG: Starting file picker...');
+      
+      // Check if user is authenticated
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
         setState(() {
-          _fileUrl = url;
-          _fileName = file.name;
-          _uploading = false;
+          _error = 'Please sign in to upload files.';
         });
-      } catch (e) {
-        setState(() { _error = 'Failed to upload file.'; _uploading = false; });
+        return;
       }
+      print('DEBUG: User authenticated: ${user.uid}');
+      
+      // Test Firebase Storage connection first
+      final storageWorking = await _testFirebaseStorage();
+      if (!storageWorking) {
+        setState(() {
+          _error = 'Storage service not available. Please try again later.';
+        });
+        return;
+      }
+      
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+      
+      print('DEBUG: File picker result: ${result?.files.length ?? 0} files');
+      
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        print('DEBUG: Selected file - Name: ${file.name}, Size: ${file.size}, Path: ${file.path}, Has bytes: ${file.bytes != null}');
+        
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          setState(() { 
+            _error = 'File size too large. Please select a file smaller than 10MB.'; 
+          });
+          return;
+        }
+        
+        // Check if file has a path (for local files) or bytes (for web)
+        if (file.path != null && file.path!.isNotEmpty) {
+          print('DEBUG: Using file path for upload: ${file.path}');
+          // Handle local file upload
+          setState(() { _uploading = true; _error = null; });
+          final fileRef = FirebaseStorage.instance.ref().child('resources/${DateTime.now().millisecondsSinceEpoch}_${file.name}');
+          try {
+            print('DEBUG: Starting file upload to Firebase Storage...');
+            await fileRef.putFile(File(file.path!));
+            print('DEBUG: File upload completed, getting download URL...');
+            final url = await fileRef.getDownloadURL();
+            print('DEBUG: Download URL obtained: $url');
+            setState(() {
+              _fileUrl = url;
+              _fileName = file.name;
+              _uploading = false;
+            });
+            print('DEBUG: File upload successful!');
+          } catch (e) {
+            print('DEBUG: File upload error: $e');
+            print('DEBUG: Error type: ${e.runtimeType}');
+            setState(() { 
+              _error = ErrorHandler.getUserFriendlyMessage(e); 
+              _uploading = false; 
+            });
+          }
+        } else if (file.bytes != null && file.bytes!.isNotEmpty) {
+          print('DEBUG: Using file bytes for upload, bytes length: ${file.bytes!.length}');
+          // Handle web file upload
+          setState(() { _uploading = true; _error = null; });
+          final fileRef = FirebaseStorage.instance.ref().child('resources/${DateTime.now().millisecondsSinceEpoch}_${file.name}');
+          try {
+            print('DEBUG: Starting bytes upload to Firebase Storage...');
+            await fileRef.putData(file.bytes!);
+            print('DEBUG: Bytes upload completed, getting download URL...');
+            final url = await fileRef.getDownloadURL();
+            print('DEBUG: Download URL obtained: $url');
+            setState(() {
+              _fileUrl = url;
+              _fileName = file.name;
+              _uploading = false;
+            });
+            print('DEBUG: Bytes upload successful!');
+          } catch (e) {
+            print('DEBUG: Bytes upload error: $e');
+            print('DEBUG: Error type: ${e.runtimeType}');
+            setState(() { 
+              _error = ErrorHandler.getUserFriendlyMessage(e); 
+              _uploading = false; 
+            });
+          }
+        } else {
+          print('DEBUG: No valid file data found - path: ${file.path}, bytes: ${file.bytes?.length ?? 0}');
+          setState(() { 
+            _error = 'Failed to read file data. Please try again.'; 
+          });
+        }
+      } else {
+        print('DEBUG: No file selected or result is null');
+      }
+    } catch (e) {
+      print('DEBUG: File picker error: $e');
+      print('DEBUG: Error type: ${e.runtimeType}');
+      setState(() { 
+        _error = ErrorHandler.getUserFriendlyMessage(e); 
+      });
     }
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _selectedCategories.isEmpty) return;
+    if (!_formKey.currentState!.validate() || _selectedCategories.isEmpty) {
+      setState(() { 
+        _error = 'Please fill all required fields and select at least one category.'; 
+      });
+      return;
+    }
+    
     if (_fileUrl == null && _linkController.text.trim().isEmpty) {
       setState(() { _error = 'Please upload a file or provide a link.'; });
       return;
     }
+    
     setState(() { _uploading = true; _error = null; });
+    
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() { 
+          _error = 'User not authenticated. Please sign in again.'; 
+          _uploading = false; 
+        });
+        return;
+      }
+      
       final docRef = await FirebaseFirestore.instance.collection('resources').add({
         'title': _titleController.text.trim(),
         'description': _descController.text.trim(),
         'categories': _selectedCategories,
         'url': _fileUrl ?? _linkController.text.trim(),
         'uploadedAt': FieldValue.serverTimestamp(),
-        // TODO: Add volunteer UID if needed
+        'uploadedBy': user.uid,
+        'uploadedByRole': 'volunteer',
       });
+      
       // Wait for serverTimestamp to be set before closing screen
       await docRef.snapshots().firstWhere((snap) => snap.data()?['uploadedAt'] != null);
       setState(() { _uploading = false; });
-      if (mounted) Navigator.pop(context, true);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Resource uploaded successfully!', style: TextStyle(fontSize: widget.fontSize)),
+            backgroundColor: Colors.green[600],
+          ),
+        );
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      setState(() { _error = 'Failed to upload resource.'; _uploading = false; });
+      print('Upload error: $e');
+      setState(() { 
+        _error = ErrorHandler.getUserFriendlyMessage(e); 
+        _uploading = false; 
+      });
     }
   }
 
@@ -85,6 +226,8 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         iconTheme: IconThemeData(color: Color(0xFF0057B8)),
+        toolbarHeight: 80, // Increased height
+        titleSpacing: 20, // Increased spacing
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(22),
@@ -131,7 +274,15 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
                 )).toList(),
               ),
               SizedBox(height: 16),
-              Text('Upload File (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: widget.fontSize)),
+              Text('Paste Link', style: TextStyle(fontWeight: FontWeight.bold, fontSize: widget.fontSize)),
+              SizedBox(height: 6),
+              TextFormField(
+                controller: _linkController,
+                decoration: InputDecoration(border: OutlineInputBorder(), hintText: 'https://example.com'),
+                style: TextStyle(fontSize: widget.fontSize),
+              ),
+              SizedBox(height: 16),
+              Text('Upload File (not yet available)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: widget.fontSize)),
               SizedBox(height: 6),
               Row(
                 children: [
@@ -145,14 +296,6 @@ class _UploadResourceScreenState extends State<UploadResourceScreen> {
                     Flexible(child: Text(_fileName!, style: TextStyle(fontSize: widget.fontSize - 2))),
                   ]
                 ],
-              ),
-              SizedBox(height: 12),
-              Text('Or Paste Link (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: widget.fontSize)),
-              SizedBox(height: 6),
-              TextFormField(
-                controller: _linkController,
-                decoration: InputDecoration(border: OutlineInputBorder(), hintText: 'https://example.com'),
-                style: TextStyle(fontSize: widget.fontSize),
               ),
               SizedBox(height: 24),
               if (_error != null) ...[

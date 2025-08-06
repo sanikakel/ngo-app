@@ -19,7 +19,7 @@ class VolunteerBeneficiaryListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(70),
+        preferredSize: Size.fromHeight(90), // Increased height from 70 to 90
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -33,16 +33,18 @@ class VolunteerBeneficiaryListScreen extends StatelessWidget {
             ],
           ),
           child: SafeArea(
-            child: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Material(
-                    color: Colors.transparent,
-                    shape: CircleBorder(),
-                    child: IconButton(
-                      icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
-                      onPressed: () {
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10), // Added top padding
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Material(
+                      color: Colors.transparent,
+                      shape: CircleBorder(),
+                      child: IconButton(
+                        icon: Icon(Icons.arrow_back, color: Colors.blue[900]),
+                        onPressed: () {
   Navigator.of(context).pushAndRemoveUntil(
     MaterialPageRoute(
       builder: (_) => VolunteerHome(fontSizeNotifier: fontSizeNotifier),
@@ -50,23 +52,24 @@ class VolunteerBeneficiaryListScreen extends StatelessWidget {
     (route) => false,
   );
 },
-                      tooltip: 'Back',
+                        tooltip: 'Back',
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Beneficiaries',
-                    style: TextStyle(
-                      fontSize: fontSizeNotifier.value + 2,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[900],
-                      letterSpacing: 0.5,
+                  Expanded(
+                    child: Text(
+                      'Beneficiaries',
+                      style: TextStyle(
+                        fontSize: fontSizeNotifier.value + 2,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[900],
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(width: 16),
-              ],
+                  SizedBox(width: 16),
+                ],
+              ),
             ),
           ),
         ),

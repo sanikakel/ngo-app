@@ -49,16 +49,17 @@ class BeneficiaryResourcesScreen extends StatelessWidget {
             elevation: 2,
             iconTheme: IconThemeData(color: Colors.blue[900]),
             shadowColor: Colors.blue[50],
+            toolbarHeight: 80, // Increased height
+            titleSpacing: 20, // Increased spacing
           ),
           body: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('resources')
                 .where('categories', arrayContains: category)
-                .orderBy('uploadedAt', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('Error loading resources'));
+                return Center(child: Text('Error loading resources: ${snapshot.error}'));
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -113,14 +114,31 @@ class BeneficiaryResourcesScreen extends StatelessWidget {
                       onTap: () async {
                         final url = data['url'];
                         if (url != null && url.isNotEmpty) {
-                          final uri = Uri.parse(url);
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri, mode: LaunchMode.externalApplication);
-                          } else {
+                          try {
+                            final uri = Uri.parse(url);
+                            
+                            if (await canLaunchUrl(uri)) {
+                              final result = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              
+                              if (!result) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Could not open resource. Please try again.')),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Could not open resource. Please check your internet connection.')),
+                              );
+                            }
+                          } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Could not open resource')),
+                              SnackBar(content: Text('Error opening resource: $e')),
                             );
                           }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('No resource URL available')),
+                          );
                         }
                       },
                     ),

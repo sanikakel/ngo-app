@@ -7,6 +7,7 @@ import '../resources/underprivileged_info.dart';
 import '../resources/specially_abled_info.dart';
 import '../resources/senior_citizen_info.dart';
 import '../accessibility/font_size_provider.dart';
+import '../utils/error_handler.dart';
 
 import 'my_courses_screen.dart';
 import '../settings/settings_screen.dart';
@@ -42,10 +43,18 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
     String? fetchedName;
     if (user != null) {
       try {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        // Add timeout to prevent hanging
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get()
+            .timeout(Duration(seconds: 5)); // 5 second timeout
         final data = userDoc.data();
         fetchedName = data?['name'];
-      } catch (_) {}
+      } catch (e) {
+        print('Error fetching user name: $e');
+        // Don't show error to user, just use default greeting
+      }
     }
     setState(() {
       userName = fetchedName;
@@ -189,6 +198,8 @@ class _BeneficiaryHomeState extends State<BeneficiaryHome> {
             automaticallyImplyLeading: false,
             backgroundColor: Colors.white,
             elevation: 0,
+            toolbarHeight: 80, // Increased height
+            titleSpacing: 20, // Increased spacing
           ),
           body: SingleChildScrollView(
             child: Padding(
